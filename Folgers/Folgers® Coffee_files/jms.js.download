@@ -1,0 +1,985 @@
+// Requires JQuery; Bootstrap 3.3.7; MagnificPopup; PictureFill; Slick
+
+var jms = jms || {};
+
+jms = {
+
+    init : function() {
+        jms.bricks.init();
+        jms.forms.init();
+        jms.filters.init();
+        jms.errorPage.init();
+        jms.iconCarousel.init();
+    },
+
+    dialog : {
+
+        toggle: function(dialogObj) {
+            if (typeof dialogObj == "object") {
+                let modal = $("#jmsDialogModal");
+                if ($("#jmsDialogModal").length) {
+                    console.log('4');
+                    modal.find(".modal-body").html("");
+                    modal.find(".modal-footer").html("");
+                    if (typeof dialogObj.header == "string" && dialogObj.header != "") {
+                        console.log('5');
+                        modal.find(".modal-body").append(`
+                            <h4>${dialogObj.header}</h4>
+                        `);
+                    }
+                    if (typeof dialogObj.body == "string" && dialogObj.body != "") {
+                        console.log('6');
+                        modal.find(".modal-body").append(`
+                            <p>${dialogObj.body}</p>
+                        `);
+                    }
+                    if (typeof dialogObj.button == "string" && dialogObj.button != "") {
+                        console.log('7a');
+                        modal.find(".modal-footer").append(`
+                            <button type="button" class="btn btn-primary btn-jmsDialogModal" data-dismiss="modal">${dialogObj.button}</button>
+                        `);
+                    } else {
+                        console.log('7b');
+                        modal.find(".modal-footer").append(`
+                            <button type="button" class="btn btn-primary btn-jmsDialogModal" data-dismiss="modal">OK</button>
+                        `);
+                    }
+                }
+                modal.modal();
+            }
+        },
+
+    },
+
+    bricks : {
+
+        init : function() {
+
+            if ( $('.accordion-batch').length ) {
+                jms.bricks.accordionBatch.init();
+            }
+
+            if ( $('.jms-media-gallery').length ) {
+                jms.bricks.imageGallery.init();
+            }
+
+            if ( $('.jms-timeline-page').length ) {
+                jms.bricks.timelinePage.init();
+            }
+
+            if ( $('.jms-video-embed').length ) {
+                jms.bricks.videoEmbed.init();
+            }
+
+            if ( $('.jmsBrickNewsletter').length ) {
+                jms.bricks.jmsBrickNewsletter.init();
+            }
+
+            if ( $('.jmsFeaturedProductCarouselBrick .item').length ) {
+                jms.bricks.productCarousel.init();
+            }
+
+            if ( $('.jmsProductCarouselBrick .item').length ) {
+                jms.bricks.productCarousel.init();
+            }
+
+            if ( $('.jms-hero-v2').length ) {
+                jms.bricks.heroV2.init();
+            }
+
+            if ($('.jms-object-collection-carousel').length) {
+                jms.bricks.objectCollectionCarousels.init();
+            }
+
+        },
+
+        accordionBatch : {
+
+            init : function() {
+                $('.accordion-batch .toggle').click( function(e) {
+                    e.preventDefault();
+                    if ($(this).hasClass('collapsed')) {
+                        $(this).removeClass('collapsed');
+                        $(this).next().collapse('show');
+                    } else {
+                        $(this).addClass('collapsed');
+                        $(this).next().collapse('hide');
+                    }
+                });
+            }
+
+        },
+
+        imageGallery : {
+
+            init : function() {
+
+                $('.jms-media-gallery .jms-media-gallery-link').magnificPopup({
+                    type: 'image',
+                    mainClass: 'mfp-fade',
+                    removalDelay: 160,
+                    fixedContentPos: true,
+                    gallery:{
+                        enabled:true
+                    }
+                });
+            }
+        },
+
+        resizeTimer : {
+
+            init : function() {
+                var jmsBricksResizeTimer;
+                $(window).on( 'resize orientationchange', function() {
+                    clearTimeout(jmsBricksResizeTimer);
+                    jmsBricksResizeTimer = setTimeout(function() {
+
+                        if ( $('.jms-timeline-page').length ) {
+                            jms.bricks.timelinePage.inViewportCheck();
+                            jms.bricks.timelinePage.setTimelineVerticalLineHeight();
+                        }
+
+                    }, 100);
+                });
+            }
+        },
+
+        timelinePage : {
+
+            animationElements : $('.milestone'),
+
+            init : function() {
+
+                $('.milestone').on('animationend', function() {
+                    $(this).find('.timeline-marker').addClass('active');
+                });
+
+                var timelineScrollTimer;
+                $(window).scroll( function() {
+                    if (timelineScrollTimer) {
+                        clearTimeout(timelineScrollTimer);
+                    }
+                    timelineScrollTimer = setTimeout(function() {
+                        jms.bricks.timelinePage.inViewportCheck();
+                        jms.bricks.timelinePage.setTimelineVerticalLineHeight();
+                    }, 15);
+                });
+                $(window).trigger('scroll');
+
+                jms.bricks.timelinePage.setTimelineVerticalLineHeight();
+            },
+
+            inViewportCheck : function() {
+                var header = $('#header');
+                var windowHeight = $(window).height() - header.height();
+                var windowTopPosition = $(window).scrollTop() + header.height();
+                var windowBottomPosition = (windowTopPosition + windowHeight);
+
+                if ( !site.mobile.matches ) {
+
+                    $.each( jms.bricks.timelinePage.animationElements, function() {
+                        var $element = $(this);
+                        var element_height = $element.outerHeight();
+                        var element_top_position = $element.offset().top;
+                        var element_bottom_position = (element_top_position + element_height);
+
+                        //check to see if this current container is within viewport
+                        if ( (element_bottom_position >= windowTopPosition) && (element_top_position <= windowBottomPosition) ) {
+                            $element.addClass('in-view');
+                        } else {
+                            $element.removeClass('in-view');
+                            $element.find('.timeline-marker').removeClass('active');
+                        }
+                    });
+
+                }
+            },
+
+            setTimelineVerticalLineHeight : function() {
+                if ( !site.mobile.matches ) {
+                    $('.jms-timeline-page .timeline-vertical-line').height( $(".jms-timeline-page").outerHeight() );
+                }
+            }
+        },
+
+        heroV2 : {
+
+            init : function() {
+
+                if ($('.hero-background-video').length) {
+
+                    jms.bricks.heroV2.initVideoBackgrounds('.hero-background-video');
+                }
+                if($('.jms-hero-v2').length) {
+                    jms.bricks.heroV2.heroAnchorScroll('.jms-hero-v2');
+                }
+            },
+
+            initVideoBackgrounds : function(element) {
+
+                // If DESKTOP, initialize videos
+                if ( window.matchMedia("(min-width:992px)").matches ) {
+
+                    $(element).each( function( index, value ) {
+                        var sources = $(value).find('source');
+                        var video = $(value).find('video');
+                        for ( var i=0; i<sources.length; i++ ) {
+                            sources[i].setAttribute('src', sources[i].getAttribute('data-video-src'));
+                        }
+
+                        // Load the video to start downloading it
+                        video.load();
+
+                        // Once the video is downloaded, it will start playing (make sure autoplay is enabled)
+                        video.on('play', function() {
+
+                            // Trigger resize, triggering subsequent scaling functions
+                            $(window).resize();
+                        });
+
+                        $(window).resize();
+                    });
+                }
+            },
+
+            scaleVideoBackgrounds : function(element) {
+                $(element).each( function( index, value ) {
+
+                    var parent = $(value);
+                    var vid  = $(value).find('video');
+
+                    // get the intrinsic width and height of video
+                    var vid_intrinsic_w = vid[0].videoWidth;
+                    var vid_intrinsic_h = vid[0].videoHeight;
+
+                    // get the video's parent element size
+                    var parent_w = parent.width();
+                    var parent_h = parent.height();
+
+                    // use largest scale factor of horizontal/vertical
+                    var scale_w = parent_w / vid_intrinsic_w;
+                    var scale_h = parent_h / vid_intrinsic_h;
+                    var scale = scale_w > scale_h ? scale_w : scale_h;
+
+                    // scale the video
+                    vid.width( scale * vid_intrinsic_w );
+                    vid.height( scale * vid_intrinsic_h );
+
+                    // remove the hidden class to begin CSS animation
+                    vid.removeClass('hidden');
+                });
+            },
+            heroAnchorScroll : function (element) {
+                let scrollToButton = document.querySelector('.page-scroll-anchor')
+                if(scrollToButton) {
+                    scrollToButton.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        let hash = this.getAttribute('href');
+                        let target = document.querySelector(hash);
+                        let elementPosition
+                        let topHat = document.querySelector(".top-hat");
+                        let topHatHeight = 0;
+                        if(topHat) {
+                            topHatHeight = topHat.offsetHeight;
+                        }
+                        if (!target) {
+                            elementPosition = document.querySelector(".jms-hero-v2").offsetHeight;
+                        } else {
+                            elementPosition = target.getBoundingClientRect().top;
+                        }
+
+                        elementPosition = elementPosition + topHatHeight;
+
+                        window.scrollTo({
+                            top: elementPosition,
+                            behavior: "smooth"
+                        })
+                    })
+                }
+            }
+        },
+
+        videoEmbed : {
+
+            init : function() {
+                jms.bricks.videoEmbed.playButtons();
+            },
+
+            playButtons : function() {
+
+                $('.video-embed .play-video.embed').on( 'click', function(e) {
+                    e.preventDefault();
+                    var videoEmbed = $(this).parents('.video-embed');
+                    videoEmbed.addClass('playing');
+                    videoEmbed.find('.poster').addClass('hidden');
+                    videoEmbed.find('iframe').attr( 'src', videoEmbed.find('iframe').attr( 'data-src' ) );
+                });
+
+                $('.video-embed .play-video.modal').magnificPopup({
+                    type: 'iframe',
+                    mainClass: 'mfp-fade',
+                    removalDelay: 160,
+                    fixedContentPos: true
+                });
+            }
+        },
+
+        objectCollectionCarousels : {
+
+            init: function() {
+
+                if ($('.jms-object-collection-carousel').length) {
+
+                    var carousel = $('.jms-object-collection-carousel');
+
+                    // Instantiate Fallbacks
+                    var CMSarrows = false;
+                    var CMSautoplay = false;
+                    var CMSautoplaySpeed = 3000;
+                    var CMScenterMode = false;
+                    var CMScenterPadding = "3rem";
+                    var CMSdots = false;
+                    var CMSinfinite = false;
+                    var CMSslidesScrollMobile = 1;
+                    var CMSslidesScrollTablet = 1;
+                    var CMSslidesScrollDesktop = 1;
+                    var CMSslidesShowMobile = 1;
+                    var CMSslidesShowTablet = 3;
+                    var CMSslidesShowDesktop = 4;
+                    var CMStransition = "slide";
+
+                    // CMS Values (Data Attributes)
+                    if ($(carousel).attr("data-arrows")) {
+                        CMSarrows = true;
+                    }
+                    if ($(carousel).attr("data-autoplay")) {
+                        CMSautoplay = true;
+                    }
+                    if ($(carousel).attr("data-autoplay-speed") && $(carousel).attr("data-autoplay-speed") != "") {
+                        CMSautoplaySpeed = parseInt($(carousel).attr("data-autoplay-speed"));
+                    }
+                    if ($(carousel).attr("data-center-mode")) {
+                        CMScenterMode = true;
+                    }
+                    if ($(carousel).attr("data-center-padding") && $(carousel).attr("data-center-padding") != "") {
+                        CMScenterPadding = $(carousel).attr("data-center-padding");
+                    }
+                    if ($(carousel).attr("data-dots")) {
+                        CMSdots = true;
+                    }
+                    if ($(carousel).attr("data-infinite")) {
+                        CMSinfinite = true;
+                    }
+                    if ($(carousel).attr("data-slides-to-scroll-mobile") && $(carousel).attr("data-slides-to-scroll-mobile") != "") {
+                        CMSslidesScrollMobile = parseInt($(carousel).attr("data-slides-to-scroll-mobile"));
+                    }
+                    if ($(carousel).attr("data-slides-to-scroll-tablet") && $(carousel).attr("data-slides-to-scroll-tablet") != "") {
+                        CMSslidesScrollTablet = parseInt($(carousel).attr("data-slides-to-scroll-tablet"));
+                    }
+                    if ($(carousel).attr("data-slides-to-scroll-desktop") && $(carousel).attr("data-slides-to-scroll-desktop") != "") {
+                        CMSslidesScrollDesktop = parseInt($(carousel).attr("data-slides-to-scroll-desktop"));
+                    }
+                    if ($(carousel).attr("data-slides-to-show-mobile") && $(carousel).attr("data-slides-to-show-mobile") != "") {
+                        CMSslidesShowMobile = parseInt($(carousel).attr("data-slides-to-show-mobile"));
+                    }
+                    if ($(carousel).attr("data-slides-to-show-tablet") && $(carousel).attr("data-slides-to-show-tablet") != "") {
+                        CMSslidesShowTablet = parseInt($(carousel).attr("data-slides-to-show-tablet"));
+                    }
+                    if ($(carousel).attr("data-slides-to-show-desktop") && $(carousel).attr("data-slides-to-show-desktop") != "") {
+                        CMSslidesShowDesktop = parseInt($(carousel).attr("data-slides-to-show-desktop"));
+                    }
+                    if ($(carousel).attr("data-transition")) {
+                        CMStransition = $(carousel).attr("data-transition");
+                    }
+
+
+                    // console.log("CMSarrows = " + CMSarrows + " ---> " + typeof CMSarrows);
+                    // console.log("CMSautoplay = " + CMSautoplay + " ---> " + typeof CMSautoplay);
+                    // console.log("CMSautoplaySpeed = " + CMSautoplaySpeed + " ---> " + typeof CMSautoplaySpeed);
+                    // console.log("CMScenterMode = " + CMScenterMode + " ---> " + typeof CMScenterMode);
+                    // console.log("CMScenterPadding = " + CMScenterPadding + " ---> " + typeof CMScenterPadding);
+                    // console.log("CMSdots = " + CMSdots + " ---> " + typeof CMSdots);
+                    // console.log("CMSinfinite = " + CMSinfinite + " ---> " + typeof CMSinfinite);
+                    // console.log("CMSslidesScrollMobile = " + CMSslidesScrollMobile + " ---> " + typeof CMSslidesScrollMobile);
+                    // console.log("CMSslidesScrollTablet = " + CMSslidesScrollTablet + " ---> " + typeof CMSslidesScrollTablet);
+                    // console.log("CMSslidesScrollDesktop = " + CMSslidesScrollDesktop + " ---> " + typeof CMSslidesScrollDesktop);
+                    // console.log("CMSslidesShowMobile = " + CMSslidesShowMobile + " ---> " + typeof CMSslidesShowMobile);
+                    // console.log("CMSslidesShowTablet = " + CMSslidesShowTablet + " ---> " + typeof CMSslidesShowTablet);
+                    // console.log("CMSslidesShowDesktop = " + CMSslidesShowDesktop + " ---> " + typeof CMSslidesShowDesktop);
+                    // console.log("CMStransition = " + CMStransition + " ---> " + typeof CMStransition);
+
+
+                    if ($('.jms-object-collection-carousel .jms-object-collection-wrap .jms-object-collection-object').length > 1) {
+                        $('.jms-object-collection-wrap').slick({
+                            autoplay:CMSautoplay,
+                            autoplaySpeed:CMSautoplaySpeed,
+                            arrows: CMSarrows,
+                            dots: CMSdots,
+                            infinite: CMSinfinite,
+                            mobileFirst: true,
+                            transition: CMStransition,
+                            centerMode: CMScenterMode,
+                            centerPadding: CMScenterPadding,
+                            slidesToScroll: CMSslidesScrollMobile,
+                            slidesToShow: CMSslidesShowMobile,
+                            responsive: [
+                                {
+                                    breakpoint: 767,
+                                    settings: {
+                                        slidesToScroll: CMSslidesScrollTablet,
+                                        slidesToShow: CMSslidesShowTablet,
+                                        centerMode:false
+                                    }
+                                },
+                                {
+                                    breakpoint: 991,
+                                    settings: {
+                                        slidesToScroll: CMSslidesScrollDesktop,
+                                        slidesToShow: CMSslidesShowDesktop,
+                                        centerMode:false
+                                    }
+                                }
+                            ]
+                        });
+                    }
+                }
+            }
+        },
+
+        productCarousel : {
+
+            init : function() {
+
+                if ( $('.featured-carousel .item').length == 3 ) {
+                    $('.featured-carousel').slick({
+                        arrows: false,
+                        dots: false,
+                        infinite: false,
+                        mobileFirst: true,
+                        slidesToShow: 1,
+                        slidesToScroll: 1,
+                        responsive: [
+                            {
+                                breakpoint: 767,
+                                settings: {
+                                    slidesToScroll: 3,
+                                    slidesToShow: 3
+                                }
+                            }
+                        ]
+                    });
+                } else {
+                    $('.featured-carousel').slick({
+                        arrows: false,
+                        dots: true,
+                        infinite: true,
+                        mobileFirst: true,
+                        slidesToShow: 1,
+                        slidesToScroll: 1,
+                        responsive: [
+                            {
+                                breakpoint: 767,
+                                settings: {
+                                    slidesToScroll: 3,
+                                    slidesToShow: 3
+                                }
+                            }
+                        ]
+                    });
+                }
+
+
+            },
+
+        },
+
+        jmsBrickNewsletter : {
+
+            init : function() {
+
+                $("button[data-form-input='simpleSignUpSubmit']").click(function(e) {
+
+                    let form = $(this).closest("form[data-form-el='simpleSignUp']");
+
+                    e.preventDefault();
+
+                    jms.forms.customValidationMethods(form);
+                    let formValidate = jms.forms.validation(form);
+
+                    if (formValidate) {
+                        jms.bricks.jmsBrickNewsletter.submit(form);
+                    }
+
+                });
+            },
+
+            submit : function(formId) {
+                let form = formId;
+                let formHolder = $(form).parents("div[data-form-el='simpleSignUpHolder']");
+                let formThankYou = $(formHolder).find("div[data-form-el='simpleSignUpThankYou']");
+                let formError = $(formHolder).find("div[data-form-el='simpleSignUpError']");
+                let successRedirect = $(form).find("input[data-form-input='successRedirect']").val();
+
+                $.ajax({
+                    cache: false,
+                    type: 'post',
+                    url: '/simple-sign-up',
+                    data: $(formId).serialize(),
+                    beforeSend: function (data) {
+                        $(formHolder).addClass("loading");
+                    },
+                    success: function (data) {
+                        if (!successRedirect) {
+                            $(form).addClass('no-show');
+                            $(formThankYou).removeClass("hiding");
+                        } else {
+                            window.location.href = successRedirect;
+                        }
+                    },
+                    error: function(data) {
+                        $(formHolder).removeClass("loading");
+                        if (data.responseText) {
+                            $(formError).html('<p>There was an error submitting the form. Please try again.</p>').addClass('show');
+                            console.log(data.responseText);
+                        }
+                    }
+                });
+            }
+
+        }
+    },
+
+    errorPage : {
+
+        init : function() {
+
+            if ($('.product-carousel-products .products .product').length > 1) {
+                $('.product-carousel-products .products').slick({
+                    arrows: false,
+                    dots: true,
+                    infinite: true,
+                    mobileFirst: true,
+                    slidesToShow: 1,
+                    slidesToScroll: 1,
+                    responsive: [
+                        {
+                            breakpoint: 767,
+                            settings: {
+                                slidesToScroll: 3,
+                                slidesToShow: 3
+                            }
+                        }
+                    ]
+
+                });
+            }
+
+            if ($('.errorPage.stacked').length > 0) {
+
+                $(window).on('resize orientationchange', function(){
+                    let headerHeight = $("#header").outerHeight();
+                    $("#content").css("margin-top", headerHeight + 'px');
+                }).resize();
+
+            }
+
+        }
+
+    },
+
+    forms : {
+
+        init : function() {
+
+            //TODO: need to include include to validate on load on consumer stack,
+            // currently the error placement isn't being placed correctly
+            jms.forms.customValidationMethods();
+
+            if ( $('#sign-up-form').length ) {
+                jms.forms.signUp.init();
+            }
+
+        },
+
+
+        customValidationMethods : function(formId) {
+            let form = formId;
+
+            $.validator.setDefaults({
+                unhighlight: function(element) {
+                    $(element).removeClass('error');
+                    var id = $(element).attr('id');
+                    $('#'+ id + '-error').remove();
+                },
+                errorElement: 'label',
+                errorClass: 'error',
+                errorPlacement: function(error, element) {
+                    element.addClass('error');
+                    if ( element.parent('.form-group').length ) {
+                        error.insertAfter(element);
+                    }
+                    else if ( element.hasClass('hiddenRecaptcha') ) {
+                        error.insertAfter(element);
+                    }
+                    else if ( element.parent().parent('.radio') ) {
+                        error.insertAfter(element.parent().parent().parent());
+                    }
+                }
+            });
+
+
+            $.validator.addMethod("zipcode", function(value, element) {
+                return this.optional(element) || /^\d{5}(?:-\d{4})?$/.test(value);
+            }, "Please enter a valid zip code.");
+
+
+            $.validator.addMethod("phoneNumber", function(phone_number, element) {
+                phone_number = phone_number.replace( /\s+/g, "" );
+                return this.optional( element ) || phone_number.length > 9 &&
+                    phone_number.match( /^(\+?1-?)?(\([2-9]([02-9]\d|1[02-9])\)|[2-9]([02-9]\d|1[02-9]))-?[2-9]([02-9]\d|1[02-9])-?\d{4}$/ );
+            }, "Please specify a valid phone number" );
+
+
+            $.validator.addMethod("emailAddress", function(value, element) {
+                var pattern = /^\b[A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{1,4}\b$/i;
+                return this.optional(element) || pattern.test(value);
+            }, "Please enter a valid email address.");
+
+            // Pseudo "numbers-only" key filter
+            $('input[type=tel]').bind('keypress', function(e) {
+                var key = e.which;
+                var okay = ( key >= 48 && key <= 57 );
+                if (!okay) {
+                    e.preventDefault();
+                }
+            }).bind('change', function() {
+                var scrubbed = $(this).val().replace(/\D+/g, '');
+                $(this).val(scrubbed);
+            });
+
+            $.validator.addMethod("agecheck", function() {
+                let validity = true;
+
+                if ($("#dobMonth").length) {
+                    var dobMonth = parseInt($(form).find("#dobMonth").val());
+                } else {
+                    var dobMonth = parseInt($(form).find("select[data-form-input='dobMonth']").val());
+                }
+                if ($("#dobYear").length) {
+                    var dobYear = parseInt($(form).find("#dobYear").val());
+                } else {
+                    var dobYear = parseInt($(form).find("input[data-form-input='dobYear']").val());
+                }
+
+                let current = new Date();
+                let currentMonth = current.getMonth() +2;
+                let currentYear = current.getFullYear();
+                let acceptable = 18;
+
+                // Do a quick check to see if the user is 18 or younger....
+                if (currentYear - dobYear < acceptable) {
+                    validity = false;
+                }
+                // If the years difference is 18
+                else if (currentYear - dobYear == acceptable) {
+
+                    // Check to see if the birth month has yet to lapse
+                    if (currentMonth <= dobMonth) {
+                        validity = false;
+                    }
+                }
+                return validity;
+            });
+
+            // Pseudo "max" property for 4 characters (type=tel doesn't support native max)
+            $('input[pattern="[0-9]{4}"]').on('keypress change', function(e) {
+                var self = $(this).val();
+                if ( self.length >= 4 ) {
+                    e.preventDefault();
+                }
+                $(this).val( $(this).val().substr(0,4)); // Trim paste
+            });
+
+            // Pseudo "max" property for 5 characters (type=tel doesn't support native max)
+            $('input[pattern="[0-9]{5}"]').on('keypress change', function(e) {
+                var self = $(this).val();
+                if ( self.length >= 5 ) {
+                    e.preventDefault();
+                }
+                $(this).val( $(this).val().substr(0,5)); // Trim paste
+            });
+        },
+
+        recaptchaCallback : function() {
+            console.log('callback!');
+            //return true;
+            $('[id^="recaptcha-placeholder"]').closest('form').valid();
+        },
+
+        validation : function(formId) {
+
+            var form = $(formId);
+
+            if ( $("#emailAddress").length ) {
+                var equalEl = '#emailAddress';
+            } else {
+                var equalEl = '#' + form[0].id + ' input[data-form-input="emailAddress"]';
+            }
+
+            form.validate({
+                ignore: ":hidden:not(.hiddenRecaptcha)",
+                rules: {
+                    firstName: {
+                        required: {
+                            depends: function () {
+                                if($.trim($(this).val()) === '') {
+                                    $(this).val($.trim($(this).val()));
+                                    return true;
+                                }
+                            }
+                        }
+                    },
+                    lastName: {
+                        required: {
+                            depends: function () {
+                                if($.trim($(this).val()) === '') {
+                                    $(this).val($.trim($(this).val()));
+                                    return true;
+                                }
+                            }
+                        }
+                    },
+                    emailAddress: {
+                        required: {
+                            depends: function () {
+                                if($.trim($(this).val()) === '') {
+                                    $(this).val($.trim($(this).val()));
+                                    return true;
+                                }
+                            }
+                        },
+                        emailAddress: true
+                    },
+                    emailAddress2: {
+                        required: {
+                            depends: function () {
+                                if($.trim($(this).val()) === '') {
+                                    $(this).val($.trim($(this).val()));
+                                    return true;
+                                }
+                            }
+                        },
+                        equalTo: equalEl,
+                        emailAddress: true
+                    },
+                    dobMonth : {
+                        required: {
+                            depends: function () {
+                                if($.trim($(this).val()) === '') {
+                                    $(this).val($.trim($(this).val()));
+                                    return true;
+                                }
+                            }
+                        }
+                    },
+                    dobYear: {
+                        required: {
+                            depends: function () {
+                                if($.trim($(this).val()) === '') {
+                                    $(this).val($.trim($(this).val()));
+                                    return true;
+                                }
+                            }
+                        },
+                        minlength:4,
+                        maxlength:4,
+                        agecheck: true
+                    },
+                    postalCode: {
+                        required: {
+                            depends: function () {
+                                if($.trim($(this).val()) === '') {
+                                    $(this).val($.trim($(this).val()));
+                                    return true;
+                                }
+                            }
+                        },
+                        minlength:5,
+                        zipcode: true
+                    },
+                    hiddenRecaptcha: {
+                        required: function() {
+                            if ($('[name="g-recaptcha-response"]').val() === '') {
+                                if (grecaptcha.getResponse() === '') {
+                                    return true;
+                                }
+                                else {
+                                    return false;
+                                }
+                            } else {
+                                return false;
+                            }
+                        }
+                    }
+
+                }
+            });
+
+            var valid = form.valid();
+
+            if (valid) {
+                if(window.hasOwnProperty('jmsCommon') && jmsCommon.hasOwnProperty('dataLayer') && jmsCommon.dataLayer.hasOwnProperty('signUp')) {
+                    jmsCommon.dataLayer.signUp();
+                }
+                return true;
+            } else {
+                return false;
+            }
+
+        },
+
+        signUp : {
+
+            init : function() {
+
+                $("#sign-up-form-submit").click(function(e) {
+                    e.preventDefault();
+                    jms.forms.customValidationMethods($('#sign-up-form'));
+                    let formValidate = jms.forms.validation($('#sign-up-form'));
+                    if (formValidate) {
+                        $('#sign-up-form').submit();
+                    }
+                });
+            },
+
+        }
+    },
+
+    filters : {
+
+        init : function() {
+
+            $('.clear-filters-btn').click(function(e) {
+                e.preventDefault();
+                $('.filter-choices .faux-checkbox').each( function(key, value) {
+                    if ($(value).hasClass('checked')) {
+                        $(value).parent('.faux-checkbox-wrap').click();
+                    }
+                });
+            });
+
+            jms.filters.setupFilterStates();
+        },
+
+        setupFilterStates : function(filterGroup) {
+
+            // todo: make this depend on get params
+            if (filterGroup) {
+                filterGroup = '#product-filters .' + filterGroup + ' .toggle';
+            }
+            var buttonClass = $('.filter .toggle');
+            var panelClass  = $('.filter .collapse');
+            if ( site.mobile.matches ) {
+                buttonClass.removeClass('collapsed');
+                panelClass.addClass('in');
+            }
+            else {
+                buttonClass.addClass('collapsed');
+                panelClass.removeClass('in');
+                $(filterGroup).click();
+            }
+        }
+    },
+
+    iconCarousel : {
+
+        init : function () {
+
+            $('.jmsIconCarouselBrick .icon-carousel-icons.slick').slick({
+                arrows: true,
+                mobileFirst: true,
+                slidesToShow: 1,
+                slidesToScroll: 1,
+                responsive: [
+                    {
+                        breakpoint: 479,
+                        settings: {
+                            slidesToShow: 2,
+                            slidesToScroll: 2
+                        }
+                    },
+                    {
+                        breakpoint: 767,
+                        settings: {
+                            slidesToShow: 3,
+                            slidesToScroll: 3
+                        }
+                    },
+                ]
+            });
+            if ( $('.icon-carousel-icon-header').length ) {
+                $('.icon-carousel-icon-header').matchHeight();
+            }
+            if ( $('.icon-carousel-icon-image-container').length ) {
+                $('.icon-carousel-icon-image-container').matchHeight();
+            }
+            $('.no-slick').parent().addClass('narrow');
+
+        }
+    },
+
+    common: {
+        loadSequencer: {
+            list: [],
+            next: function() {
+                if (this.list.length > 0) {
+                    const next = this.list[0];
+                    this.list.shift();
+                    if (typeof next === 'function') {
+                        next();
+                    }
+                }
+            }
+        }
+    },
+};
+
+
+/**
+ * Common JMS functions
+ */
+(function(jms, $) {
+
+    /**
+     * Map fields of the same name from one object to another
+     * @param {object} targetObject
+     * @param {object} sourceObject
+     * @returns {null|boolean}
+     */
+    jms.mapObjectFields = function(targetObject, sourceObject) {
+        if(targetObject === undefined || targetObject === null || !$.isPlainObject(targetObject)) {
+            return null;
+        }
+
+        if(sourceObject === undefined || sourceObject === null || !$.isPlainObject(sourceObject)) {
+            return null;
+        }
+
+        let keys = Object.keys(sourceObject);
+        for(let key in keys) {
+            if(targetObject.hasOwnProperty(keys[key])) {
+                targetObject[keys[key]] = sourceObject[keys[key]];
+            }
+        }
+
+        return true;
+    };
+
+}(window.jms = window.jms || {}, jQuery));
+
+
+
+$(document).ready( function() {
+    jms.init();
+    // jms.dialog.toggle(jmsDialogs.cartGeneralError);
+});

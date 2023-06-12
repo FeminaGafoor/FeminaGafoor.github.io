@@ -1,0 +1,178 @@
+
+var configUrl = "../config/{0}/{1}-config.json";
+var campaignConfigUrl = "../config/{0}/campaign/campaign-{1}.json";
+var profileId = 0;
+var campaignId = '';
+var encodedConfig = '';
+var lang = 0;
+var widgetConfig = {};
+
+$(document).ready(function(){
+    // Removed by BE-3989
+	//loadJS('../js/wtb-PetsHandler.js', jsLoadCallback, document.body);
+    
+	profileId = GetURLParameter("pid");
+    campaignId = GetURLParameter("campaignId");
+    encodedConfig = GetURLParameter("encodedConfig");
+    
+    if ( profileId == "" )
+    {
+        if ( window.location.href.toLowerCase().indexOf("multibrand") != -1 )
+        {
+            var version = GetURLParameter("version");
+
+            if ( version != "" )
+            {
+                loadJS('../js/wtbCore-portal-' + version + '.js', jsLoadCallback, document.body);
+            }
+            else
+            {
+                loadJS('../js/wtbCore-portal.js', jsLoadCallback, document.body);    
+            }
+        }
+    }
+    else if ( campaignId != "" )
+    {
+        getCampaignConfig();
+    }
+    else if (  encodedConfig != "" )
+    {
+        var version = "BNI-SS";
+        
+        if ( GetURLParameter("version") != '' )
+        {
+            version = GetURLParameter("version");
+        }
+        
+        loadJS('../js/wtbCore-' + version + '.js', jsLoadCallback, document.body);
+    }
+    else
+    {
+        getProfileConfig();    
+    }
+});
+
+function GetURLParameter (sParam) {
+	var sPageURL = window.location.search.substring(1);
+    var sURLVariables = sPageURL.split('&');
+    for (var i = 0; i < sURLVariables.length; i++)
+    {
+        var sParameterName = sURLVariables[i].split('=');
+        if (sParameterName[0] == sParam)
+        {
+            return sParameterName[1];
+        }
+    }
+
+    return "";
+};
+
+function getProfileConfig () {
+    lang = GetURLParameter("lang");
+    if ( lang == "" ) lang = GetURLParameter("type");
+
+    var dir = profileId;
+
+    if ( lang != "" )
+    {
+        dir = profileId + "/" + lang;
+    }
+
+	var fullConfigUrl = configUrl.replace('{0}', dir);
+    fullConfigUrl = fullConfigUrl.replace('{1}', profileId);
+
+	console.log('Calling Config: ' + fullConfigUrl);
+
+	$.ajax({
+		url: fullConfigUrl,
+		type: 'GET',
+		success: function (data) { 
+			widgetConfig = data;
+
+            var version = GetURLParameter("version");
+
+            if ( version != "" )
+            {
+                loadJS('../js/wtbCore-' + version + '.js', jsLoadCallback, document.body);
+            }
+            else
+            {
+                if ( widgetConfig.version == undefined ) 
+                {
+                    if ( window.location.href.toLowerCase().indexOf('where-to-buy') == -1 ) 
+                    {
+                        widgetConfig.version = '1.0';
+                    }
+                    else
+                    {
+                        widgetConfig.version = 'latest';
+                    }
+                }
+                
+                loadJS('../js/wtbCore-' + widgetConfig.version + '.js', jsLoadCallback, document.body);
+            }
+		}
+	});
+};
+
+function getCampaignConfig () {
+    
+    var campaignName = GetURLParameter('campaignId');
+
+    lang = GetURLParameter("lang");
+    if ( lang == "" ) lang = GetURLParameter("type");
+
+    var dir = profileId;
+
+    if ( lang != "" )
+    {
+        dir = profileId + "/" + lang;
+    }
+
+	var fullConfigUrl = campaignConfigUrl.replace('{0}', dir);
+    fullConfigUrl = fullConfigUrl.replace('{1}', campaignName);
+
+	console.log('Calling Campaign Config: ' + fullConfigUrl);
+
+	$.ajax({
+		url: fullConfigUrl,
+		type: 'GET',
+		success: function (data) { 
+			widgetConfig = data;
+
+            var version = GetURLParameter("version");
+
+            if ( version != "" )
+            {
+                loadJS('../js/wtbCore-' + version + '.js', jsLoadCallback, document.body);
+            }
+            else
+            {
+                if ( widgetConfig.version == undefined ) 
+                {
+                        widgetConfig.version = 'ad';
+                }
+                
+                loadJS('../js/wtbCore-' + widgetConfig.version + '.js', jsLoadCallback, document.body);
+            }
+		}
+	});
+};
+
+function loadJS (url, implementationCode, location) {
+    //url is URL of external file, implementationCode is the code
+    //to be called from the file, location is the location to 
+    //insert the <script> element
+
+    var scriptTag = document.createElement('script');
+    scriptTag.src = url;
+
+    scriptTag.onload = implementationCode;
+    scriptTag.onreadystatechange = implementationCode;
+
+    location.appendChild(scriptTag);
+};
+
+function jsLoadCallback(){
+	console.log("Widget Code Loaded");
+}

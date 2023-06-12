@@ -1,0 +1,906 @@
+(function(jmsCommon) {
+
+    let dataLayer = jmsCommon.dataLayer = jmsCommon.dataLayer || {};
+
+    dataLayer.fireProductOrRecipeClickEvent = function (anchor) {
+        const objectType = anchor.getAttribute('data-type').trim().toLowerCase();
+        const objectName = anchor.getAttribute('data-name').trim().toLowerCase();
+        const categoryName = anchor.getAttribute('data-category').trim().toLowerCase();
+        const gtin = anchor.getAttribute('data-gtin').trim().toLowerCase();
+        const context = anchor.getAttribute('data-context') ? anchor.getAttribute('data-context').trim().toLowerCase() : "(not available)";
+
+        if (objectType === 'product') {
+            const event = {
+                event: 'productClick',
+                productInfo: {
+                    productName: objectName,
+                    productCategory: categoryName,
+                    gtin: gtin,
+                    url: anchor.getAttribute('href'),
+                    bvCount: '(not available)', //currently no way to retrieve this on non-pdp
+                    bvRating: '(not available)',
+                    context: context
+                }
+            };
+            if(dataLayer.hasOwnProperty('getEcommerceProductClick')) {
+                const ecommProductClick = dataLayer.getEcommerceProductClick(anchor, objectName, categoryName, gtin);
+                if(ecommProductClick) {
+                    event.ecommerce = ecommProductClick;
+                }
+            }
+            window.dataLayer.push(event);
+        } else if (objectType === 'recipe') {
+            window.dataLayer.push({
+                event: 'recipeClick',
+                recipeInfo: {
+                    id: gtin,
+                    recipeName: objectName,
+                    recipeCategory: categoryName,
+                    url: anchor.getAttribute('href'),
+                    bvCount: '(not available)', //currently no way to retrieve this on non-pdp
+                    bvRating: '(not available)',
+                    context: context
+                }
+            });
+        }
+    };
+
+    dataLayer.fireChannelAdvisor = function (anchor) {
+
+        const objectName = anchor.hasAttribute('data-name') ? anchor.getAttribute('data-name').toLowerCase() : "(not available)";
+        const categoryName = anchor.hasAttribute('data-category') ? anchor.getAttribute('data-category').trim().toLowerCase() : "(not available)";
+        const gtin = anchor.hasAttribute('data-gtin') ? anchor.getAttribute('data-gtin').trim().toLowerCase() : "(not available)";
+
+        const bvCount = jmsCommon.dataLayer.reviewCount ? jmsCommon.dataLayer.reviewCount : "(not available)";
+        const bvRating = jmsCommon.dataLayer.aggregateRating ? jmsCommon.dataLayer.aggregateRating : "(not available)";
+
+        if (anchor.nodeName === 'A' && anchor.classList.contains('ca-buy-now')) {
+            window.dataLayer.push({
+                event: 'buyNowClick',
+                productInfo: {
+                    productName: objectName,
+                    productCategory: categoryName,
+                    gtin: gtin,
+                    url: anchor.getAttribute('href'),
+                    bvCount: bvCount,
+                    bvRating: bvRating
+                }
+            });
+        } else if (anchor.nodeName === 'A' && anchor.classList.contains('ca-where-to-buy')) {
+            window.dataLayer.push({
+                event: 'findStoreClick',
+                productInfo: {
+                    productName: objectName,
+                    productCategory: categoryName,
+                    gtin: gtin,
+                    url: anchor.getAttribute('href'),
+                    bvCount: bvCount,
+                    bvRating: bvRating
+                }
+            });
+        }
+    };
+
+    dataLayer.fireMainMenuClick = function (anchor) {
+        let text = anchor.innerText.trim().toLowerCase();
+        let href = anchor.getAttribute('href');
+
+        if (anchor.parentNode.classList.contains('cart-local')) {
+            text = anchor.querySelector('.sr-only').innerText.trim().toLowerCase();
+        }
+        if (href === '#' || href === '') {
+            href = '(not available)'
+        }
+        window.dataLayer.push({
+            event: 'mainMenuClick',
+            navigation: {
+                text: text,
+                url: href
+            }
+        });
+    };
+
+    dataLayer.fireMainMenuExpandedClick = function (anchor, dropDownCategory) {
+        let text = anchor.innerText.trim().toLowerCase();
+        let href = anchor.getAttribute('href');
+        if (href === '#') {
+            href = '(not available)'
+        }
+        window.dataLayer.push({
+            event: 'mainMenuExpandedClick',
+            navigation: {
+                text: text,
+                category: dropDownCategory,
+                url: href
+            }
+        });
+    };
+
+    dataLayer.fireArticleClick = function (anchor) {
+        const articleName = anchor.getAttribute('data-name') ? anchor.getAttribute('data-name').trim().toLowerCase() : "(not available)";
+        const articleCategoryName = anchor.getAttribute('data-category') ? anchor.getAttribute('data-category').trim().toLowerCase() : "(not available)";
+        const url = anchor.getAttribute('href');
+        const context = anchor.getAttribute('data-context') ? anchor.getAttribute('data-context').trim().toLowerCase() : "(not available)";
+
+        window.dataLayer.push({
+            event: 'articleClick',
+            articleInfo:{
+                articleName: articleName,
+                articleCategory: articleCategoryName,
+                url: url,
+                context:context
+            }
+        });
+    };
+
+    dataLayer.fireSocialClick = function (anchor, dataPlatform, socialLink, type) {
+
+        let name = anchor.getAttribute('data-name') ? anchor.getAttribute('data-name').trim().toLowerCase() : "(not available)";
+        let categoryName = anchor.getAttribute('data-category') ? anchor.getAttribute('data-category').trim().toLowerCase() : "(not available)";
+        let url = anchor.getAttribute('current-url');
+
+        if (type === 'product') {
+            window.dataLayer.push({
+                event: 'socialShare',
+                socialInfo: {
+                    socialPlatform: dataPlatform,
+                    socialLink: socialLink
+                },
+                productInfo: {
+                    productCategory: categoryName,
+                    productName: name
+                }
+            });
+        } else if (type === 'recipe') {
+            window.dataLayer.push({
+                event: 'socialShare',
+                socialInfo: {
+                    socialPlatform: dataPlatform,
+                    socialLink: socialLink
+                },
+                recipeInfo: {
+                    recipeCategory: categoryName,
+                    recipeName: name
+                }
+            });
+        } else if (type === 'article') {
+            window.dataLayer.push({
+                event: 'socialShare',
+                socialInfo: {
+                    socialPlatform: dataPlatform,
+                    socialLink: socialLink
+                },
+                articleInfo: {
+                    articleCategory: categoryName,
+                    articleName: name,
+                    url: url
+                }
+            });
+        }
+
+    };
+
+    dataLayer.fireFilterApplied = function (anchor) {
+
+        let category = '(not available)';
+        let name = '(not available)';
+
+        category = anchor.hasAttribute('data-filter-category') ? anchor.getAttribute('data-filter-category').toLowerCase() : category;
+        name = anchor.hasAttribute('data-filter-name') ? anchor.getAttribute('data-filter-name').toLowerCase() : name;
+
+        window.dataLayer.push({
+            event: 'filterApplied',
+            forms: {
+                filterCategory: category,
+                filterName: name
+            }
+        });
+
+    };
+
+    dataLayer.fireMobileNavMenuOpen = function() {
+        window.dataLayer.push({
+            event: "mobileNavMenuClick",
+            navigation: {
+                text: "hamburger menu open",
+                url: "(not available)"
+            }
+        });
+    };
+
+    dataLayer.fireMobileNavMenuClose = function() {
+        window.dataLayer.push({
+            event: "mobileNavMenuClick",
+            navigation: {
+                text: "hamburger menu close",
+                url: "(not available)"
+            }
+        });
+    };
+
+    dataLayer.isInViewport = function(el) {
+        const rect = el.getBoundingClientRect();
+        return (
+            rect.top >= 0 &&
+            rect.left >= 0 &&
+            rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+            rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+        );
+    };
+
+    dataLayer.bindEvents = function() {
+
+        //**************************************
+        //* Bind Language Nav Events
+        //**************************************
+        const langNav = document.getElementById('language-select');
+        if (langNav) {
+            langNav.addEventListener('click', function (event) {
+                const target = event.target;
+                let anchor;
+                if (target.nodeName === 'A') {
+                    anchor = target;
+                } else {
+                    anchor = target.closest('a');
+                }
+                dataLayer.fireMainMenuClick(anchor);
+            });
+        }
+
+        //**************************************
+        //* Bind Logo Events
+        //**************************************
+        const logo = document.querySelectorAll('div.logo')[0];
+        if (logo) {
+            logo.addEventListener('click', function (event) {
+                const target = event.target;
+
+                window.dataLayer.push({
+                    event: 'mainMenuClick',
+                    navigation: {
+                        text: 'logo',
+                        url: '/'
+                    }
+                });
+            });
+        }
+
+        //**************************************
+        //* Bind Main Nav Events
+        //**************************************
+        const mainNav = document.getElementById('main-nav');
+        if (mainNav) {
+            mainNav.addEventListener('click', function (event) {
+                const target = event.target;
+                const dropDown = target.closest('.dropdown');
+                const dropDownMenu = target.closest('.dropdown-menu');
+                let dropDownCategory;
+
+                /** @type HTMLElement */
+                let anchor;
+                if (target.nodeName === 'A') {
+                    anchor = target;
+                } else {
+                    anchor = target.closest('a');
+                }
+                if (anchor && !mainNav.classList.contains('product-mega-menu')) {
+                    let objectType = anchor.getAttribute('data-type');
+                    dropDownCategory = dropDown ? dropDown.getElementsByTagName('a')[0].innerText.trim().toLowerCase() : "(not available)";
+                    // Template mega menu dropdown selections
+                    if (dropDown && anchor.classList.contains('dropdown-toggle') && !anchor.classList.contains('main-nav-sub-nav')) {
+                        // fire main menu click
+                        dataLayer.fireMainMenuClick(anchor);
+                    } else if (dropDown && dropDownMenu && !objectType) {
+                        // fire expanded click
+                        dataLayer.fireMainMenuExpandedClick(anchor, dropDownCategory);
+                    } else {
+                        // fire main menu click
+                        dataLayer.fireMainMenuClick(anchor);
+                    }
+                } else if (anchor && mainNav.classList.contains('product-mega-menu')) {
+                    let objectType = anchor.getAttribute('data-type');
+
+                    if (objectType) {
+                        objectType = objectType.trim().toLowerCase();
+                    }
+                    dropDownCategory = anchor.hasAttribute('data-parent-dropdown') ? anchor.getAttribute('data-parent-dropdown').toLowerCase() : "(not available)";
+                    // Custom product display navs
+                    if (anchor.classList.contains('main-menu-click')) {
+                        // fire main menu click
+                        dataLayer.fireMainMenuClick(anchor);
+                    } else if (anchor.classList.contains('expanded-menu-click') && objectType) {
+                        // fire expanded click
+                        dataLayer.fireMainMenuExpandedClick(anchor, dropDownCategory);
+                        dataLayer.fireProductOrRecipeClickEvent(anchor);
+                    } else if (anchor.classList.contains('expanded-menu-click')) {
+                        // fire expanded click
+                        dataLayer.fireMainMenuExpandedClick(anchor, dropDownCategory);
+                    } else if (objectType) {
+                        // fire product or recipe click
+                        dataLayer.fireProductOrRecipeClickEvent(anchor);
+                    } else {
+                        // fire main menu click
+                        dataLayer.fireMainMenuClick(anchor);
+                    }
+                }
+            });
+        }
+
+        const mainNavToggle = document.getElementById('main-nav-toggle');
+        if (mainNavToggle) {
+            mainNavToggle.addEventListener('click', function (event) {
+                const target = event.target;
+                let button;
+                if (target.nodeName === 'SPAN') {
+                    button = target.closest('button');
+                } else if (target.nodeName === 'BUTTON') {
+                    button = target;
+                }
+                if (button) {
+                    if (button.classList.contains('collapsed')) {
+                        dataLayer.fireMobileNavMenuOpen(); // open a collapsed (closed) mobile nav
+                    } else {
+                        dataLayer.fireMobileNavMenuClose(); // close an uncollapsed (open) mobile nav
+                    }
+                }
+            });
+        }
+
+        //**************************************
+        //* Bind Footer Events
+        //**************************************
+        const footer = document.getElementById('footer');
+        if (footer) {
+            footer.addEventListener('click', function (event) {
+                const target = event.target;
+                /** @type HTMLElement */
+                let anchor = null;
+                if (target.nodeName === 'A') {
+                    anchor = target;
+                } else if (target.nodeName === 'I' || target.nodeName === 'IMG') {
+                    anchor = target.closest('a');
+                }
+                if (anchor) {
+                    let text = anchor.getAttribute('data-gtm') ? anchor.getAttribute('data-gtm') : anchor.getAttribute('title');
+                    if (text == null) {
+                        text = anchor.innerText;
+                    }
+                    window.dataLayer.push({
+                        event: 'footerClick',
+                        navigation: {
+                            text: text.trim().toLowerCase(),
+                            url: anchor.getAttribute('href')
+                        }
+                    });
+                }
+            });
+        }
+
+        //**************************************
+        //* Bind Product Social Events
+        //**************************************
+        const socialShares = document.querySelectorAll('div.product-social, div.article-social, div.recipe-social');
+        if (socialShares) {
+            socialShares.forEach(function (social) {
+                social.addEventListener('click', function (event) {
+                    const target = event.target;
+
+                    /** @type HTMLElement */
+                    let anchor = null;
+                    if (target.nodeName === 'A') {
+                        anchor = target;
+                    } else if (target.nodeName === 'I') {
+                        anchor = target.closest('a');
+                    }
+                    if (anchor) {
+                        let parent = anchor.parentNode.closest('.product-social, .article-social, .recipe-social');
+
+                        let dataPlatform = anchor.getAttribute('data-platform');
+                        let socialLink = anchor.getAttribute('href');
+
+                        if (dataPlatform === 'email' || dataPlatform === 'print') {
+                            socialLink = '(not available)'
+                        }
+
+                        if (dataPlatform === 'pinterest' && anchor.dataset.pinHref) {
+                            socialLink = anchor.dataset.pinHref;
+                        }
+
+                        if (parent.classList.contains('product-social')) {
+                            dataLayer.fireSocialClick(anchor, dataPlatform, socialLink, 'product');
+                        } else if (parent.classList.contains('article-social')) {
+                            dataLayer.fireSocialClick(anchor, dataPlatform, socialLink, 'article');
+                        } else if (parent.classList.contains('recipe-social')) {
+                            dataLayer.fireSocialClick(anchor, dataPlatform, socialLink, 'recipe');
+                        }
+
+                    }
+                });
+            });
+        }
+
+        //**************************************
+        //* Bind Bazaarvoice Events
+        // Note, these are going to be fragile, they depend on the markup that is
+        // hosted by BV, and could change any time.
+        //**************************************
+        const bvSummaryContainer = document.querySelectorAll('div[data-bv-show="rating_summary"]')[0];
+        if (bvSummaryContainer) {
+            bvSummaryContainer.addEventListener('click', function (event) {
+                const target = event.target;
+                if (target.nodeName === 'BUTTON' && target.id === 'WAR') {
+                    window.dataLayer.push({
+                        event: 'bvWriteReview'
+                    });
+                }
+            });
+        }
+
+        const bvProductContainer = document.getElementsByClassName('product-reviews')[0];
+        if (bvProductContainer) {
+            bvProductContainer.addEventListener('click', function (event) {
+                const target = event.target;
+                if (target.nodeName === 'BUTTON' && target.classList.contains('bv-write-review')) {
+                    window.dataLayer.push({
+                        event: 'bvWriteReview'
+                    });
+                } else if (target.nodeName === 'BUTTON' && target.id === 'first-to-write') {
+                    window.dataLayer.push({
+                        event: 'bvWriteReview'
+                    });
+                } else if (target.nodeName === 'SPAN' && target.classList.contains('bv-content-btn-pages-next')) {
+                    window.dataLayer.push({
+                        event: 'bvLoadMoreReviews'
+                    });
+                }
+            });
+        }
+
+        const bvRecipeContainer = document.getElementsByClassName('recipe-reviews')[0];
+        if (bvRecipeContainer) {
+            bvRecipeContainer.addEventListener('click', function (event) {
+                const target = event.target;
+                if (target.nodeName === 'BUTTON' && target.classList.contains('bv-write-review')) {
+                    window.dataLayer.push({
+                        event: 'bvWriteReview'
+                    });
+                } else if (target.nodeName === 'BUTTON' && target.id === 'first-to-write') {
+                    window.dataLayer.push({
+                        event: 'bvWriteReview'
+                    });
+                } else if (target.nodeName === 'SPAN' && target.classList.contains('bv-content-btn-pages-next')) {
+                    window.dataLayer.push({
+                        event: 'bvLoadMoreReviews'
+                    });
+                }
+            });
+        }
+
+        if ((bvProductContainer) || (bvRecipeContainer)) {
+
+            document.addEventListener('click', function (event) {
+                const target = event.target;
+                if (target.nodeName === 'SPAN' && target.closest('ul') && target.closest('ul').id === 'bv-content-filter-dropdown-Rating') {
+                    window.dataLayer.push({
+                        event: 'bvLoadMoreReviews'
+                    });
+                } else if (target.nodeName === 'LI' && target.closest('ul') && target.closest('ul').id === 'bv-dropdown-select-reviews-sortby') {
+                    window.dataLayer.push({
+                        event: 'bvLoadMoreReviews'
+                    });
+                } else if (target.nodeName === 'BUTTON' && target.classList.contains('bv_button_buttonFull')) {
+                    window.dataLayer.push({
+                        event: 'bvReadReviews'
+                    });
+                }
+            });
+
+            document.addEventListener('scroll', function bvReviewsViewportWatcher() {
+                const box = document.querySelector('div.bv-action-bar h2.bv-action-bar-header');
+                if (box) {
+                    let inView = dataLayer.isInViewport(box);
+                    if (inView) {
+                        window.dataLayer.push({
+                            event: 'bvReadReviews'
+                        });
+                        document.removeEventListener('scroll', bvReviewsViewportWatcher);
+                    }
+                }
+            }, {
+                passive: true
+            });
+        }
+
+        //**************************************
+        //* Bind Hero Carousel Events
+        //**************************************
+        const heroCarousels = document.querySelectorAll('.jms-hero-v2, .home-hero, .data-layer-broadcast[data-broadcast-type*="hero"]');
+        if (heroCarousels) {
+            heroCarousels.forEach(function (heroCarousel) {
+                heroCarousel.addEventListener('click', function (event) {
+                    const target = event.target;
+                    if (target.nodeName === 'A') {
+                        window.dataLayer.push({
+                            event: 'heroCarouselClick',
+                            module: {
+                                text: target.innerText.trim().toLowerCase(),
+                                url: target.getAttribute('href')
+                            }
+                        });
+                    }
+                });
+            });
+        }
+
+        //**************************************
+        //* Bind broadcast Article Events
+        //**************************************
+        const broadcastArticles = document.querySelectorAll('.data-layer-broadcast[data-broadcast-type*="article"]');
+        if (broadcastArticles) {
+            broadcastArticles.forEach(function (article) {
+                article.addEventListener('click', function (event) {
+                    const target = event.target;
+                    let anchor;
+
+                    if (target.nodeName === 'A') {
+                        anchor = target;
+                    } else {
+                        anchor = target.closest('a');
+                    }
+
+                    if (anchor) {
+                        dataLayer.fireArticleClick(anchor);
+                    }
+                });
+            });
+        }
+
+        //**************************************
+        //* Bind broadcast product Events
+        //**************************************
+        const broadcastProductOrRecipe = document.querySelectorAll('.data-layer-broadcast[data-broadcast-type*="product"], .data-layer-broadcast[data-broadcast-type*="recipe"]');
+        if (broadcastProductOrRecipe) {
+            broadcastProductOrRecipe.forEach(function (broadcastContainer) {
+                broadcastContainer.addEventListener('click', function (event) {
+                    const target = event.target;
+                    /** @type HTMLElement */
+                    let anchor = null;
+                    if (target.nodeName === 'IMG' || target.nodeName === 'SPAN') {
+                        anchor = target.closest('a');
+                    } else if (target.nodeName === 'A') {
+                        anchor = target;
+                    }
+                    if (
+                        anchor &&
+                        anchor.hasAttribute('data-type') &&
+                        (
+                            anchor.getAttribute('data-type').toLowerCase() === 'product' ||
+                            anchor.getAttribute('data-type').toLowerCase() === 'recipe'
+                        ) &&
+                        !(
+                            anchor.classList.contains('ca-buy-now') ||
+                            anchor.classList.contains('special-buy-now')
+                        )
+                    ){
+                        dataLayer.fireProductOrRecipeClickEvent(anchor);
+                    }
+                });
+            });
+        }
+
+        //**************************************
+        //* Bind broadcast WTB Events
+        //**************************************
+        const broadcastWtbs = document.querySelectorAll('.data-layer-broadcast[data-broadcast-type*="wtb"]');
+        if (broadcastWtbs) {
+            broadcastWtbs.forEach(function (wtb) {
+                wtb.addEventListener('click', function(event) {
+                    const target = event.target;
+                    if(target.nodeName === 'A' && target.classList.contains('ca-buy-now')) {
+                        dataLayer.fireChannelAdvisor(target);
+                    }
+                });
+            });
+        }
+
+        //**************************************
+        //* Bind Filter Events
+        //**************************************
+        const filterBar = document.getElementById('filter-bar');
+        if (filterBar) {
+            filterBar.addEventListener('click', function(event) {
+                const target = event.target;
+                /** @type HTMLElement */
+                let anchor = null;
+                let input = null;
+                if ((target.nodeName === 'SPAN') || (target.nodeName === 'LABEL')) {
+                    anchor = target.closest('a');
+                } else if (target.nodeName === 'A') {
+                    anchor = target;
+                }
+                if(anchor && !anchor.classList.contains('clear-filters-btn')) {
+                    input = anchor.querySelector('input');
+                    if (input && !input.checked) {
+                        // input was not checked so broadcast event
+                        dataLayer.fireFilterApplied(anchor);
+                    }
+                }
+            });
+        }
+
+        //**************************************
+        //* Bind Object Collection Events
+        //**************************************
+        const objectCollection = document.querySelectorAll('.pimcore_area_jms-object-collection, .pimcore_area_jms-multi-collection-object');
+        if (objectCollection) {
+            objectCollection.forEach(function (collection) {
+                collection.addEventListener('click', function (event) {
+                    const target = event.target;
+                    if ((target.nodeName === 'IMG' && (target.classList.contains('collection-image') || (target.classList.contains('collection-product-image')))) ||
+                        (target.nodeName === 'DIV' && target.classList.contains('collection-background-image')) ||
+                        (target.nodeName === 'SPAN' && (target.classList.contains('object-name') || target.classList.contains('product-name'))) ||
+                        (target.nodeName === 'A' && target.hasAttribute('data-type') && !target.classList.contains('ca-buy-now'))) {
+                        /** @type HTMLElement */
+                        let anchor;
+                        if (target.nodeName === 'A') {
+                            anchor = target;
+                        } else {
+                            anchor = target.closest('a');
+                        }
+                        //const ratingContainer = anchor.closest('div.jms-object-collection-object').getElementsByTagName('collection-rating');
+                        dataLayer.fireProductOrRecipeClickEvent(anchor);
+                    } else if (target.nodeName === 'A' && target.classList.contains('ca-buy-now')) {
+                        dataLayer.fireChannelAdvisor(target);
+                    }
+                });
+            });
+        }
+
+        //**************************************
+        //* Bind All Recipes Events
+        //**************************************
+        const recipeContainers = document.querySelectorAll('.featured-recipe, .recipe-collection-objects');
+        if (recipeContainers) {
+            recipeContainers.forEach(function (recipeContainer) {
+                recipeContainer.addEventListener('click', function (event) {
+                    const target = event.target;
+
+                    /** @type HTMLElement */
+                    let anchor;
+                    if (target.nodeName === 'A') {
+                        anchor = target;
+                    } else {
+                        anchor = target.closest('a');
+                    }
+
+                    if (anchor && anchor.hasAttribute('data-type')) {
+                        dataLayer.fireProductOrRecipeClickEvent(anchor);
+                    }
+                });
+            });
+        }
+
+        //**************************************
+        //* Bind Breadcrumb Events
+        //**************************************
+        const breadcrumbs = document.getElementsByClassName('breadcrumbs')[0];
+        if (breadcrumbs) {
+            breadcrumbs.addEventListener('click', function (event) {
+                const target = event.target;
+                if (target.nodeName === 'A') {
+                    window.dataLayer.push({
+                        event: 'productBreadcrumb',
+                        productNavigation: {
+                            text: target.innerText.trim().toLowerCase()
+                        }
+                    });
+                }
+            });
+        }
+
+        //**************************************
+        //* Bind Related Products Events
+        //**************************************
+        const relatedProducts = document.getElementsByClassName('related-products')[0];
+        if (relatedProducts) {
+            relatedProducts.addEventListener('click', function (event) {
+                const target = event.target;
+                /** @type HTMLElement */
+                let anchor = null;
+                if ((target.nodeName === 'IMG' || target.nodeName === 'SPAN') ||
+                    (target.nodeName === 'DIV' && target.classList.contains('product-cover-image'))) {
+                    anchor = target.closest('a');
+                } else if (target.nodeName === 'A') {
+                    anchor = target;
+                }
+                if (anchor) {
+                    dataLayer.fireProductOrRecipeClickEvent(anchor);
+                }
+            });
+        }
+
+        //**************************************
+        //* Bind Related Recipes  Events
+        //**************************************
+        const relatedRecipes = document.getElementsByClassName('related-recipes')[0];
+        if (relatedRecipes) {
+            relatedRecipes.addEventListener('click', function (event) {
+                const target = event.target;
+                /** @type HTMLElement */
+                let anchor = null;
+                if ((target.nodeName === 'IMG' || target.nodeName === 'SPAN') ||
+                    (target.nodeName === 'DIV' && target.classList.contains('recipe-cover-image'))) {
+                    anchor = target.closest('a');
+                } else if (target.nodeName === 'A') {
+                    anchor = target;
+                }
+                if (anchor) {
+                    dataLayer.fireProductOrRecipeClickEvent(anchor);
+                }
+            });
+        }
+
+        //**************************************
+        //* Bind Featured Products Events
+        //**************************************
+        const featuredProducts = document.getElementsByClassName('featured-carousel')[0];
+        if (featuredProducts) {
+            featuredProducts.addEventListener('click', function (event) {
+                const target = event.target;
+                /** @type HTMLElement */
+                let anchor = null;
+                if (target.nodeName === 'IMG' || target.nodeName === 'SPAN') {
+                    anchor = target.closest('a');
+                } else if (target.nodeName === 'A') {
+                    anchor = target;
+                }
+                if (anchor) {
+                    // Not sure if this is the featured product carousel? if so it will duplicate events
+                    // with the product click event
+                    window.dataLayer.push({
+                        event: 'featuredCarouselCTA',
+                        module: {
+                            text: anchor.innerText.trim().toLowerCase(),
+                            url: anchor.getAttribute('href')
+                        }
+                    });
+
+                    dataLayer.fireProductOrRecipeClickEvent(anchor);
+                }
+            });
+        }
+
+        //**************************************
+        //* Bind Smartlabel Events
+        //**************************************
+        const smartLabel = document.getElementsByClassName('smartlabel')[0];
+        if (smartLabel) {
+            smartLabel.addEventListener('click', function (event) {
+                const target = event.target;
+                if (target.nodeName() === 'A') {
+                    window.dataLayer.push({
+                        event: 'productSmartLabel',
+                        info: {
+                            text: 'smart label'
+                        }
+                    });
+                } else if (target.nodeName() === 'BUTTON') {
+                    const sizeSelection = smartLabel.getElementById('smartlabel-packageSize').selectedOptions[0].innerText.trim().toLowerCase();
+                    window.dataLayer.push({
+                        event: 'productSmartLabelView',
+                        info: {
+                            productSize: sizeSelection,
+                            text: 'smart label'
+                        }
+                    });
+                }
+            });
+        }
+
+        //**************************************
+        //* Bind PDP Buy Now Events
+        //**************************************
+        const productDetails = document.getElementsByClassName('product-details')[0];
+        if (productDetails) {
+            productDetails.addEventListener('click', function (event) {
+                const target = event.target;
+                dataLayer.fireChannelAdvisor(target);
+            });
+        }
+
+        //**************************************
+        //* Bind Where-to-buy Events
+        //**************************************
+        const wtbChoices = document.getElementById('wtb-choices');
+        if (wtbChoices) {
+            wtbChoices.addEventListener('click', function (event) {
+                const target = event.target;
+
+                if (target.nodeName === 'BUTTON' && target.id === 'where-to-buy-buy-now') {
+                    window.dataLayer.push({
+                        event: 'buyNowClick'
+                    });
+                } else if (target.nodeName === 'BUTTON' && target.id === 'where-to-buy-find-in-store') {
+                    window.dataLayer.push({
+                        event: 'findStoreClick'
+                    });
+                }
+            });
+        }
+
+        const whereToBuy = document.getElementsByClassName('where-to-buy')[0];
+        if (whereToBuy) {
+            whereToBuy.addEventListener('click', function (event) {
+                const target = event.target;
+                let anchor = null;
+                if ((target.nodeName === 'IMG' && target.id === 'product-preview-image') ||
+                    (target.nodeName === 'DIV' && target.id === 'product-preview-title')) {
+                    anchor = target.closest('a');
+                } else if (target.nodeName === 'A' && target.id === 'product-preview-link') {
+                    anchor = target;
+                }
+                if (anchor) {
+                    const objectName = anchor.getAttribute('data-name').trim().toLowerCase();
+                    const categoryName = anchor.getAttribute('data-category').trim().toLowerCase();
+                    const gtin = anchor.getAttribute('data-gtin').trim().toLowerCase();
+
+                    window.dataLayer.push({
+                        event: 'productClick',
+                        productInfo: {
+                            productName: objectName,
+                            productCategory: categoryName,
+                            gtin: gtin,
+                            url: anchor.getAttribute('href'),
+                            bvCount: '(not available)', //currently no way to retrieve this on non-pdp
+                            bvRating: '(not available)'
+                        }
+                    });
+                }
+            });
+        }
+    };
+
+//
+// //Where to buy events
+// Can't get this on sites that use destini where to buy
+// raised in channel-advisor-modal.html.twig
+
+// Doesn't exist on any template site yet
+// window.dataLayer.push({
+//     event: 'formSuccess', //will occur only on the where to buy page
+//     forms: {
+//         formName: 'simple sign up'
+//     }
+// });
+//
+// Doesn't exist on any template site yet
+// window.dataLayer.push({
+//     event: 'productFilter', //will occur on a PLP filter click
+//     productFilter: {
+//         text: 'pecans',
+//         category: 'nut type', //optional field
+//         count: '3'
+//     }
+// });
+//
+// window.dataLayer.push({
+//     event: 'productFilter', //clear all option
+//     productFilter: {
+//         text: 'clear all'
+//     }
+// });
+//
+// Nutritional tab is always shown by default , so is this on collapse?
+// window.dataLayer.push({
+//     event: 'productInfoTab',
+//     info: {
+//         text: 'nutritional information'
+//     }
+// });
+//
+
+    document.addEventListener('DOMContentLoaded', function() {
+        jmsCommon.dataLayer.bindEvents();
+    });
+
+})(window.jmsCommon = window.jmsCommon || {});

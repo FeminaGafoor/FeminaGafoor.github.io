@@ -1,0 +1,521 @@
+body{
+    margin:0;
+}
+h2,h3,p{
+    margin: 0;
+}
+.head{
+    display: flex;
+    justify-content: space-between;
+    width: 1400px;
+    margin: 0px 50px 0px 130px;
+    font-family: "Oswald";
+    font-size: 18px;
+    font-weight: 600;
+}
+.navbar{
+    display: flex;
+    width: 100%;
+    position: fixed;
+    z-index: 5;
+    background-color: #fff;
+    height: 75px;
+    align-items: center;
+}
+.top{
+    display: flex;
+}
+.fimg img{
+    width: 80rem;
+    height: 443px
+}
+.section{
+    display: flex;
+     overflow: hidden; 
+    margin-left: -16px;
+  
+}
+.text{
+    color:rgb(254, 248, 248);
+    font-family:'Oswald', sans-serif;
+    width: 34rem;
+    position: relative;
+font-size: 35px;
+    left: -71rem;
+}
+.text h4{
+    width: 34rem;
+    position: relative;
+    
+    top: 182px;;
+}
+.exp h4{
+    color:black;
+    font-size: 39px;
+    position: relative;
+   
+    font-family:'Oswald', sans-serif;
+   width:43rem;
+    right: -34rem;
+    bottom: 25px;
+}
+.bot1 img{
+height:19rem;
+width:19rem;
+}
+.bot2 img{
+    height:19rem;
+    width:19rem;
+    }
+.bot3 img{
+    height:19rem;
+    width:19rem;
+        }
+.three{
+    position: relative;
+    display: flex;
+    width: 63rem;
+    justify-content: space-between;
+    left:9rem;
+    top:-3rem;
+} 
+.bel{
+    display: flex;
+    width: 54rem;
+    justify-content: space-between;
+    position: relative;
+    left: 14rem;
+    top: -3rem;
+    font-size: 16
+    px;
+}
+.bel1 h3{
+    font-family:'Oswald', sans-serif;
+    color:black;
+    
+}
+.bel2 h3{
+    font-family:'Oswald', sans-serif;
+    color:black;
+}
+.bel3 h3{
+    font-family:'Oswald', sans-serif;
+    color:black; 
+}
+.stars{
+    display: flex;
+    width: 54rem;
+    justify-content: space-between;
+    position: relative;
+    left: 13rem;
+}
+.stars{
+    position: relative;
+    height: 39px;
+    bottom: 44px;
+    left:218px;
+}
+ .star1 img{
+    position: relative;
+    height: 39px;
+    bottom: 7px
+}
+.star2 img{
+    position: relative;
+    height: 39px;
+    bottom: 7px
+} 
+.star3 img{
+    position: relative;
+    height: 39px;
+    bottom: 7px
+} 
+.btn-main{
+    
+    width: 100%;
+    height: 42px; 
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    top: -4rem
+}
+.bt{
+    padding: 3px;
+}
+.bt button{
+    width: 12px;
+    height: 13px;
+    background-color:#ba0c2f;
+    border-radius: 11px;
+    border-color: rgb(164, 155, 155);
+
+}
+
+.a{
+    width:100%;
+    position:relative;
+    top:-44px;
+    height: 47px;
+    align-items: center;
+    justify-content:center;
+    display: flex;
+}
+.a button{
+  
+    font-size: 16px;
+    color:#fceebb;
+    background-color: #ba0c2f; 
+    border-color: #ba0c2f;
+    height: 47px;
+    width: 229px;
+}
+.a button:hover{
+    color:#fceebb;
+background-color:#8a0923;
+border-color: #ba0c2f;
+
+
+}
+.para img{
+    
+    width: 100%;
+    height:460px;
+    margin-top: 28px;
+    margin-left:31px;
+    margin: 0
+}
+
+.para1{
+    position:absolute;
+    top:1200px;
+    margin-left:372px;
+    text-align: center;
+}
+.para1 h3{
+    font-size: 37px;
+    font-family:'Oswald', sans-serif ;
+    color: #EEEE;
+    text-align: center;
+ } 
+ .para1 p{
+    font-size: 20px;
+    font-family:'Oswald', sans-serif ;
+    color: #EEEE;
+    letter-spacing: 2px;
+ } 
+    
+.para1 span{
+    font-family:'Oswald', sans-serif ;
+    color: #EEEE;
+   
+    font-weight: 500;
+
+}
+
+.c button{
+    font-size: 16px;
+    color:#fceebb;
+    border-color: #ba0c2f;
+    background-color: #ba0c2f;
+    
+    height: 47px;
+    width: 229px;
+}
+.c button:hover{
+    color:#fceebb;
+    border-color: #ba0c2f;
+background-color:#8a0923;
+}
+.som{
+    font-size: 25px;
+    font-family:'Oswald', sans-serif ;
+    color:#050303;
+    height:12rem;
+    text-align: center;
+
+}
+.som h2{
+    padding:37px;
+    word-spacing: 5px;
+    
+}
+.som hr{
+    width:682px;
+    top:0px;
+}
+.take{
+    height: 26px;}
+
+.take p{
+    padding:42px;
+    position: relative;
+    top: -13px;
+    font-size: 21px;
+    letter-spacing: 1px;
+   
+     font-family: "Open Sans"; 
+    font-style: normal;
+    font-weight: 500;
+    
+    color: #666;
+ 
+    font-weight: normal;
+    text-align: center;
+}
+.sec{
+    display: flex;
+    width:100%;
+    height: 410px;
+    float: none;
+    margin-top: 47px;
+    text-align: center;
+    justify-content: center;
+    
+ 
+}
+.lsec{
+   width:50%; 
+   background-image: url("leftcoffee.jpg");
+   background-size: cover;
+   background-position: center;
+
+}
+.rsec{
+ width:50%;
+ background-image: url("/Folgers/dalgona.jpg");
+   background-size: cover;
+   background-position: center;
+
+
+}
+
+
+.lsec h3{
+    color:#ffff;
+    text-align: center;
+    font-family:'Oswald', sans-serif ;
+    font-size: 35px;
+    position: relative;
+    top: 219px
+}
+.rsec h3{
+    color:#ffff;
+    text-align: center;
+    justify-content: center;
+    font-family:'Oswald', sans-serif ;
+    font-size: 35px;
+    position: relative;
+    top: 219px
+}
+.vl button{
+    font-size: 16px;
+    color:#fceebb;
+    background-color: #ba0c2f;
+    height: 47px;
+    width: 229px;
+    border-color: #ba0c2f;
+    position: relative;
+    top: 239px;
+
+}
+.vr button{
+    font-size: 16px;
+    color:#fceebb;
+    background-color: #ba0c2f;
+    height: 47px;
+    border-color: #ba0c2f;
+    position: relative;
+    top: 239px;
+    width: 229px;
+
+}
+.vl button:hover{
+    color:#fceebb;
+
+background-color: #ba0c2f;
+    border-color: #ba0c2f;
+}
+.vr button:hover{
+    color:#fceebb;
+    border-color: #ba0c2f;
+background-color:#ba0c2f;
+}
+
+.dis{
+    font-size: 25px;
+    font-family:'Oswald', sans-serif ;
+    color:#050303;
+    height:12rem;
+    text-align: center;
+
+}
+.dis h2{
+    padding:37px;
+    word-spacing: 5px;
+    
+}
+.dis hr{
+    width:682px;
+    top:0px;
+}
+.find{
+    height: 26px;}
+
+.find p{
+    padding:42px;
+    position: relative;
+    top: -13px;
+    font-size: 21px;
+    letter-spacing: 1px;
+   
+     font-family: "Open Sans"; 
+    font-style: normal;
+    font-weight: 500;
+    
+    color: #666;
+ 
+    font-weight: normal;
+    text-align: center;
+}
+.third{
+    display: flex;
+    width:100%;
+    height: 410px;
+    float: none;
+    margin-top: 47px;
+    text-align: center;
+    justify-content: center;
+    
+ 
+}
+.lthird{
+   width:50%; 
+   background-image: url("/Folgers/cefekuru.jpg");
+   background-size: cover;
+   background-position: center;
+
+}
+.rthird{
+ width:50%;
+ background-image: url("/Folgers/lady.jpg");
+   background-size: cover;
+   background-position: center;
+
+
+}
+
+
+.lthird h3{
+    color:#ffff;
+    text-align: center;
+    font-family:'Oswald', sans-serif ;
+    font-size: 35px;
+    position: relative;
+}
+.rthird h3{
+    color:#ffff;
+    text-align: center;
+    justify-content: center;
+    font-family:'Oswald', sans-serif ;
+    font-size: 35px;
+}
+.lm button{
+    font-size: 16px;
+    color:#10100f;
+    background-color:#f9fffa;
+    height: 47px;
+    width: 229px;
+    border-color: #f9fffa;
+
+}
+.tr button{
+    font-size: 16px;
+    color:#0e0d0d;
+    background-color:#f9fffa;
+    height: 47px;
+    border-color: #f9fffa;
+    width: 229px;
+
+}
+.lm button:hover{
+    color:#fceebb;
+
+background-color:#f2f1f1;
+    border-color: #f2f1f1;
+}
+.tr button:hover{
+    color:#fceebb;
+    border-color:#f2f1f1;
+background-color:#f2f1f1;
+}
+.foot{
+    background-color: #ba0c2f;
+
+}
+.foot{
+    display: flex;
+    text-align: left;
+color:#ffffff;
+    justify-content: left;
+  font-family:'Open Sans'; 
+    
+   
+    
+
+
+}
+.foot ul{
+list-style: none;
+letter-spacing: 1px;
+    font-size: medium;
+ position: relative;
+    left: 60px;
+   
+}
+.foot f1{
+    font-size: 3rem;
+    list-style: none;
+   
+   
+     position: relative;
+    left: 60px;
+    
+
+}
+.foot f2{
+    list-style: none;
+   
+ 
+}
+ul li{
+    margin-top: 35px;
+     letter-spacing: 1px;
+    font-size: 4px;
+     font-size: 17px;
+}
+
+.info{
+    font-size: 18px;
+    width: 500px;
+    font-size: 13px;
+    color: rgb(193, 188, 188);
+    margin-left: 100px;
+    margin-top: 50px;
+}
+.fol{
+    margin-top: 100px;
+    
+} 
+.wl{
+    position: absolute;
+}
+.flex{
+    display: flex;
+    width: 100%;
+    margin-top: 50px;
+    height: 409px;
+}
+
+

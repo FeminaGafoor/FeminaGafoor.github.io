@@ -1,0 +1,514 @@
+"use strict";
+
+// Check for the dataLayer object (tagging) and create one if it doesn't exist
+var dataLayer = window.dataLayer || [];
+
+/**
+ * Instantiate the object(s)
+ * @type {{recaptchaSiteKey: string, el: Element, screen: Element, recaptchaEnabled: string}}
+ */
+jms.tray = {}
+jms.tray.el = document.querySelector("#jms-tray");
+jms.tray.screen = document.querySelector("#jms-tray-screen");
+jms.tray.cookies = {};
+jms.tray.state = {};
+jms.tray.transmit = {};
+jms.tray.additionalFields = {};
+
+/**
+ * Initialize the event listeners
+ */
+jms.tray._init = function () {
+
+    jms.tray.recaptchaEnabled = document.querySelector('#jms-tray__form').getAttribute('data-recaptcha-enabled');
+    jms.tray.recaptchaSiteKey = document.querySelector('#jms-tray__form').getAttribute('data-recaptcha-site-key');
+
+    jms.tray.state.set('shown');
+
+    jms.tray.el.querySelector("#jms-tray__close").addEventListener("click", function (e) {
+        e.preventDefault();
+        if (jms.tray.el.getAttribute("data-transmit-state") === "success") {
+            jms.tray.state.set('completed');
+        } else {
+            jms.tray.state.set('closed');
+        }
+    });
+    jms.tray.el.querySelector("#jms-tray__status-alert-error .jms-tray__close-contextual").addEventListener("click", function (e) {
+        e.preventDefault();
+        jms.tray.transmit._clearStates();
+        jms.tray.el.setAttribute('data-transmit-state', '');
+    });
+    jms.tray.el.querySelector("#jms-tray__status-alert-thank-you .jms-tray__close-contextual").addEventListener("click", function (e) {
+        e.preventDefault();
+        if (jms.tray.el.getAttribute("data-transmit-state") === "success") {
+            jms.tray.state.set('completed');
+        } else {
+            jms.tray.state.set('closed');
+        }
+    });
+    jms.tray.el.querySelector("#jms-tray__collapse").addEventListener("click", function (e) {
+        e.preventDefault();
+        jms.tray.state.set('collapsed');
+    });
+    jms.tray.el.querySelector("#jms-tray__expand").addEventListener("click", function (e) {
+        e.preventDefault();
+        jms.tray.state.set('expanded');
+    });
+    jms.tray.el.querySelector("#jms-tray__form .jms-tray__form-control").addEventListener("focus", function (e) {
+        if (jms.tray.el.classList.contains('expanded')) {
+            e.preventDefault(); // Wait to set focus
+            jms.tray.state.set('exploded');
+            e.target.focus();
+        }
+    });
+    jms.tray.el.querySelector("#jms-tray__error-try-again-btn").addEventListener("click", function (e) {
+        jms.tray.el.querySelector("#jms-tray__submit").click();
+    });
+    jms.tray.screen.addEventListener("click", function (e) {
+        if (
+            (jms.tray.el.getAttribute("data-transmit-state") !== "loading") &&
+            (jms.tray.el.getAttribute("data-transmit-state") !== "failed")
+        ) {
+            if (jms.tray.el.getAttribute("data-transmit-state") === "success") {
+                jms.tray.state.set('completed');
+            } else {
+                jms.tray.state.set('collapsed');
+            }
+        } else {
+            e.preventDefault();
+        }
+    });
+    document.querySelector("body").addEventListener("keydown", function (e) {
+        if (
+            (this.classList.contains('jms-tray-exploded')) &&
+            (e.key === "Escape") &&
+            (jms.tray.el.getAttribute("data-transmit-state") !== "loading") &&
+            (jms.tray.el.getAttribute("data-transmit-state") !== "failed")
+        ) {
+            if (jms.tray.el.getAttribute("data-transmit-state") === "success") {
+                jms.tray.state.set('completed');
+            } else {
+                jms.tray.state.set('collapsed');
+            }
+        } else if (e.key === "Escape") {
+            e.preventDefault();
+        }
+    });
+
+    if ((jms.tray.recaptchaEnabled) && (jms.tray.recaptchaSiteKey)) {
+        jms.tray.el.querySelector("#email-address-input").addEventListener("change", function () {
+            grecaptcha.ready(function () {
+                grecaptcha.execute(jms.tray.recaptchaSiteKey, {action: 'jms_tray_email_address'})
+            });
+        });
+        jms.tray.el.querySelector("#confirm-email-address-input").addEventListener("change", function () {
+            grecaptcha.ready(function () {
+                grecaptcha.execute(jms.tray.recaptchaSiteKey, {action: 'jms_tray_confirm_email_address'})
+            });
+        });
+        jms.tray.el.querySelector("#jms-tray__submit").addEventListener("click", function (e) {
+            grecaptcha.execute(jms.tray.recaptchaSiteKey, {action: 'jms_tray_submit_button_click'})
+        })
+    }
+
+    const additionalFieldsParents = jms.tray.el.querySelectorAll('#jms-tray__form .hasAdditionalFields');
+    additionalFieldsParents.forEach(parent => {
+        const fieldType = parent.getAttribute('type');
+        if (fieldType === 'text') {
+            parent.addEventListener('input', function (e) {
+                const self = e.target;
+                if (self.value.trim().length > 0) {
+                    jms.tray.additionalFields.toggle(self, true);
+                } else {
+                    jms.tray.additionalFields.toggle(self, false);
+                }
+            });
+        } else if (fieldType === 'radio') {
+            parent.addEventListener('change', function (e) {
+                const self = e.target;
+                if (self.checked) {
+                    jms.tray.additionalFields.toggle(self, true);
+                } else {
+                    jms.tray.additionalFields.toggle(self, false);
+                }
+            });
+            if (parent.name === "birthAdopt") {
+                parent.addEventListener('change', function (e) {
+                    const self = e.target;
+                    if (self.checked) {
+                        jms.tray.additionalFields.updateDateFieldsNames(parent.value);
+                    }
+                });
+            }
+        }
+    });
+}
+
+/**
+ * End this module sequence with the JMS Load Sequencer
+ */
+jms.tray.endSequence = function() {
+    jms.tray.el.remove();
+    jms.tray.screen.remove();
+    if (typeof window.jms.common.loadSequencer.next === 'function') {
+        window.jms.common.loadSequencer.next();
+    }
+}
+
+/**
+ * Clear all containing form field values.
+ * @param {object} parent The parent-most div, inclusive to all the target fields
+ */
+jms.tray.additionalFields._clear = function (parent) {
+    parent = ((parent) && (typeof parent === 'object')) ? parent : false;
+    if (parent) {
+        const inputs = parent.querySelectorAll('input');
+        inputs.forEach(input => {
+            const fieldType = input.getAttribute('type');
+            if (fieldType === 'text' || fieldType === 'tel') {
+                const e = new Event("blur");
+                input.value = "";
+                input.dispatchEvent(e);
+            } else if (fieldType === 'radio') {
+                const e = new Event("change");
+                input.checked = false;
+                input.dispatchEvent(e);
+            }
+        });
+    }
+}
+
+/**
+ * Toggle the state of the provided parent's container for its children's additional fields.
+ * @param {object} parent Parent form field to provide the prescriptive action
+ * @param {boolean} state I/O for the state toggle of the fields
+ */
+jms.tray.additionalFields.toggle = function (parent, state) {
+    parent = ((parent) && (typeof parent === 'object')) ? parent : false;
+    if ((parent) && (parent.hasAttribute('data-additional-fields-container'))) {
+        const selector = parent.getAttribute('data-additional-fields-container');
+        const container = document.querySelector(selector);
+        if ((container) && (typeof container === 'object')) {
+            if (state) {
+                container.classList.add('open');
+            } else {
+                container.classList.remove('open');
+                jms.tray.additionalFields._clear(container);
+            }
+        } else {
+            console.error('jms.tray.showAdditionalFields -> Target container not found to show/hide. -- ' + selector);
+        }
+    }
+}
+
+/**
+ * Toggle the name attributes of the date fields to more clearly identify the type of date.
+ * @param {string} state Looking for either "adoption" or "birthday" to match case statements.
+ */
+jms.tray.additionalFields.updateDateFieldsNames = function (state) {
+    if (typeof state === "string") {
+        const month = document.getElementById('sliderMonth');
+        const day = document.getElementById('sliderDay');
+        const year = document.getElementById('sliderYear');
+        if (typeof month === "object" && typeof day === "object" && typeof year === "object") {
+            if (state === "adoption") {
+                month.name = 'pet_adoptionMonth';
+                day.name = 'pet_adoptionDay';
+                year.name = 'pet_adoptionYear';
+            } else if (state === "birthday") {
+                month.name = 'pet_dobMonth';
+                day.name = 'pet_dobDay';
+                year.name = 'pet_dobYear';
+            }
+        }
+    }
+}
+
+/**
+ * Check for cookie support.
+ * @returns {boolean}
+ */
+jms.tray.cookies.checkCookieSupport = function () {
+    let cookieEnabled = navigator.cookieEnabled;
+    if (!cookieEnabled) {
+        document.cookie = "testcookie";
+        cookieEnabled = document.cookie.indexOf("testcookie") != -1;
+    }
+    return cookieEnabled;
+}
+
+/**
+ * Get a cookie by name.
+ * @param {string} cookieName
+ * @returns {string}
+ */
+jms.tray.cookies.getCookie = function (cookieName) {
+    let name = cookieName + "=";
+    let decodedCookie = decodeURIComponent(document.cookie);
+    let allCookies = decodedCookie.split(';');
+    for (let i = 0; i < allCookies.length; i++) {
+        let c = allCookies[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return "";
+}
+
+/**
+ * Create a cookie by name and supply it with attached content.
+ * @param {string} cookieName The name of the cookie
+ * @param {string} data The data to be stored
+ * @param {boolean} overwrite Whether or not to overwrite a cookie with the same name
+ */
+jms.tray.cookies.setCookie = function (cookieName, data, daysToLive, overwrite) {
+    if (jms.tray.cookies.checkCookieSupport()) {
+        if (typeof data === "string" && data != "") {
+            document.cookie = cookieName + "=" + data + ";expires=" + jms.tray.cookies.getExpirationDate(daysToLive) + ";path=/";
+        }
+    }
+}
+
+/**
+ * Create and return a date object.
+ * @param {number} daysToLive The number of days from today
+ * @returns {string} Date as a string
+ */
+jms.tray.cookies.getExpirationDate = function (daysToLive) {
+    daysToLive = ((daysToLive) && (typeof daysToLive === 'number')) ? daysToLive : 1;
+    const date = new Date();
+    date.setTime(date.getTime() + parseInt(daysToLive) * 24 * 60 * 60 * 1000);
+    return date.toGMTString();
+}
+
+/**
+ * Clears all known states from the tray and should be called prior to changing state.
+ */
+jms.tray.state._clear = function () {
+    jms.tray.transmit._clearStates();
+    const states = ['collapsed', 'expanded', 'exploded'];
+    states.forEach((state) => {
+        jms.tray.el.classList.remove(state);
+        document.querySelector('body').classList.remove('jms-tray-' + state);
+    });
+    jms.tray.screen.classList.remove("shadow");
+}
+
+/**
+ * Dismiss the tray for a given period of time.
+ * @param {number} duration Optional duration. Default is 24 hours.
+ */
+jms.tray.state.dismiss = function (duration) {
+    duration = ((duration) && (typeof duration === 'string')) ? duration : false;
+    jms.tray.el.remove();
+    jms.tray.screen.remove();
+    if (jms.tray.el.getAttribute('data-transmit-state') !== 'success') {
+        jms.tray.cookies.setCookie("jmsTrayDismissed", "true", 7);
+    }
+}
+
+/**
+ * Set the state of the tray.
+ * @param {string} state
+ */
+jms.tray.state.set = function (state) {
+    state = ((state) && (typeof state === 'string')) ? state : false;
+    if (state) {
+        if (state !== 'shown') {
+            jms.tray.state._clear();
+            jms.tray.el.classList.add(state);
+        }
+        if (state === 'exploded') {
+            document.querySelector('body').classList.add('jms-tray-' + state);
+        } else if ((state === 'closed') || state === 'completed') {
+            jms.tray.state.dismiss();
+            jms.tray.endSequence();
+        } else if (state === 'shown') {
+            jms.tray.el.style.transform = 'translateY(0)';
+        }
+        if ((state === 'shown') || (state === 'expanded')) {
+            jms.tray.screen.classList.add("shadow");
+        }
+        if ((jms.tray.recaptchaEnabled) && (jms.tray.recaptchaSiteKey)) {
+            grecaptcha.ready(function () {
+                grecaptcha.execute(jms.tray.recaptchaSiteKey, {action: 'jms_tray_state_change_to_' + state})
+            });
+        }
+        dataLayer.push({
+            'event': 'jmsTrayStateChange',
+            'state': state
+        });
+    }
+}
+
+/**
+ * Private function to reset the current transmission state.
+ */
+jms.tray.transmit._clearStates = function () {
+    const states = jms.tray.el.querySelectorAll(".jms-tray__status-alert");
+    states.forEach((state) => {
+        state.classList.remove("show");
+    });
+}
+
+/**
+ * Set the state of the tray's AJAX fetch loader overlay.
+ * @param state
+ */
+jms.tray.transmit.loading = function (state) {
+    jms.tray.transmit._clearStates();
+    jms.tray.el.setAttribute('data-transmit-state', 'loading');
+    state = ((state) && (typeof state === 'boolean')) ? state : false;
+    if (state) {
+        jms.tray.el.querySelector('#jms-tray__status-alert-loading').classList.add('show');
+    } else {
+        jms.tray.el.querySelector('#jms-tray__status-alert-loading').classList.remove('show');
+    }
+}
+
+/**
+ * Set the state of the tray if an error occurs while transmitting.
+ */
+jms.tray.transmit.fail = function () {
+    jms.tray.transmit._clearStates();
+    jms.tray.el.setAttribute('data-transmit-state', 'failed');
+    const errorEl = jms.tray.el.querySelector('#jms-tray__status-alert-error');
+    errorEl.classList.add('show');
+    if (errorEl.querySelector(".btn-primary")){
+        errorEl.querySelector(".btn-primary").focus();
+    }
+}
+
+/**
+ * Send the form data payload via fetch AJAX api.
+ * @param {object} form The form element to be delivered
+ * @param {string|boolean} token The token from reCaptcha.
+ */
+jms.tray.transmit.fetch = function (form, token) {
+    if (form) {
+        token = ((token) && ((typeof token === 'boolean') || (typeof token === 'string'))) ? token : false;
+        jms.tray.transmit.loading(true);
+        const formData = new FormData(form);
+        if (token) {
+            formData.append('recaptchaToken', token);
+        }
+        fetch('/slider-sign-up' + document.location.search, {
+            method: 'post',
+            mode: 'same-origin',
+            credentials: 'same-origin',
+            body: formData
+        })
+            .then(function (response) {
+                jms.tray.transmit.loading(false);
+                if (response.status === 200) {
+                    jms.tray.transmit.success();
+                } else {
+                    jms.tray.transmit.fail();
+                }
+                return response.json();
+            })
+            .then(function (data) {
+                jms.tray.setSuppressionCookie(data)
+            });
+    }
+}
+
+/**
+ * Controller for a successful form submission.
+ * @param {object} response The response object from the submission
+ */
+jms.tray.transmit.success = function (response) {
+    jms.tray.transmit._clearStates();
+    jms.tray.el.setAttribute('data-transmit-state', 'success');
+    jms.tray.el.querySelector('#jms-tray__form').classList.add("hide");
+    dataLayer.push({
+        'event': 'formSubmit',
+        'forms': {
+            'formName': 'slider newsletter'
+        }
+    });
+    jms.tray.cookies.setCookie("jmsTrayDismissed", "true", 365);
+    const thankYou = jms.tray.el.querySelector('#jms-tray__status-alert-thank-you');
+    thankYou.classList.add('show');
+    if (thankYou.querySelector(".btn-primary")){
+        thankYou.querySelector(".btn-primary").focus();
+    } else if (thankYou.querySelector(".btn-secondary")) {
+        thankYou.querySelector(".btn-secondary").focus();
+    }
+}
+
+/**
+ * Evaluate if a supression cookie is needed and if so, create it.
+ * @param {object} data JSON response data object
+ */
+jms.tray.setSuppressionCookie = function (data) {
+    if (data.needsSuppressionCookie === true) {
+        let script = document.createElement('script');
+        script.type = "text/javascript";
+        let src = data.url + "/scripts/wampa.php?t=do-not-sell";
+        script.src = src.replace("api//", "api/");
+        document.getElementsByTagName('head')[0].appendChild(script);
+    }
+}
+
+const jmsTrayInit = function() {
+    const jmsTrayDOM = document.getElementById("jms-tray");
+    if (
+        (!jms.tray.cookies.getCookie('guid')) &&
+        (!jms.tray.cookies.getCookie("jmsTrayDismissed")) &&
+        (typeof (jmsTrayDOM) != 'undefined') &&
+        (jmsTrayDOM != null)
+    ) {
+        jms.tray._init();
+
+        Pristine.addValidator("in-range", function (value, errorTextNoun, low, high, canBeEmpty) {
+            canBeEmpty = ((canBeEmpty) && (typeof canBeEmpty === 'string') && (canBeEmpty.toLowerCase().trim() === "true"));
+            const inRange = (low < high) && (parseInt(value) >= low) && (parseInt(value) <= high);
+            if (canBeEmpty) {
+                return value.trim() === "" || inRange;
+            } else {
+                return inRange
+            }
+        }, "Provide a ${1} between ${2} and ${3}", 1, true);
+
+        const formConfig = {
+            classTo: 'jms-tray__form-group',
+            errorClass: 'jms-tray__form-group-error',
+            errorTextParent: 'jms-tray__form-group',
+            errorTextTag: 'div',
+            errorTextClass: 'jms-tray__error-text'
+        };
+        const form = jms.tray.el.querySelector("#jms-tray__form");
+        const pristine = new Pristine(form, formConfig, false);
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            let valid = pristine.validate();
+            if (valid) {
+                let recaptchaToken = false;
+                if ((jms.tray.recaptchaEnabled) && (jms.tray.recaptchaSiteKey)) {
+                    grecaptcha.ready(function () {
+                        grecaptcha.execute(jms.tray.recaptchaSiteKey, {action: 'submit'})
+                            .then(function (token) {
+                                jms.tray.transmit.fetch(form, token);
+                            });
+                    });
+                } else {
+                    jms.tray.transmit.fetch(form);
+                }
+            }
+        });
+        const formInputs = jms.tray.el.querySelectorAll("#jms-tray__form .jms-tray__form-control");
+        formInputs.forEach(input => {
+            input.addEventListener("blur", function (e) {
+                if (input.parentElement.classList.contains("jms-tray__form-group-error") || input.value != "") {
+                    pristine.validate(input);
+                }
+            });
+        });
+    } else {
+        jms.tray.endSequence();
+    }
+};
